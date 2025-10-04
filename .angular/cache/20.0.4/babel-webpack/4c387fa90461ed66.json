@@ -1,0 +1,1 @@
+{"ast":null,"code":"export * from './public-api';","map":{"version":3,"names":[],"sources":["C:\\Users\\azeez\\Desktop\\DevOps-CI-CD-azure-project\\src\\app\\demo\\layout\\admin\\index.ts"],"sourcesContent":["export * from './public-api';\n"],"mappings":"AAAA,cAAc,cAAc","ignoreList":[]},"metadata":{},"sourceType":"module","externalDependencies":[]}
