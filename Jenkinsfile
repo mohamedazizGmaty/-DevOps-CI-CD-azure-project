@@ -1,19 +1,57 @@
-FROM node:20-alpine AS build
+pipeline {
+    agent any
 
-WORKDIR /app
+    environment {
+        DOCKER_HUB = credentials('docker-hub') // Jenkins credentials ID
+    }
 
-COPY package*.json ./
+    stages {
+        stage('Checkout SCM') {
+            steps {
+                git branch: 'main',
+                    credentialsId: 'github-token',
+                    url: 'https://github.com/mohamedazizGmaty/-DevOps-CI-CD-azure-project'
+            }
+        }
 
-RUN npm ci --legacy-peer-deps
+        stage('Build Angular App') {
+            steps {
+                sh 'echo "Installing dependencies..."'
+                sh 'npm ci --legacy-peer-deps'
+                sh 'npm run build --prod'
+            }
+        }
 
-COPY . .
+        stage('Build & Push Docker Image') {
+            steps {
+                script {
+                    def IMAGE = "azizgmaty/mon-angular-app:${BUILD_NUMBER}"
+                    sh 'echo Building Docker image...'
+                    sh "docker build -t ${IMAGE} ."
+                    sh "echo ${DOCKER_HUB_PSW} | docker login -u ${DOCKER_HUB_USR} --password-stdin"
+                    sh "docker push ${IMAGE}"
+                }
+            }
+        }
 
-RUN npm run build --prod
+        stage('Update Manifest & Deploy') {
+            steps {
+                sh 'echo "Deploy step (ArgoCD/K8s manifest update goes here)"'
+                // Example: sh 'kubectl apply -f k8s/'
+            }
+        }
+    }
 
-FROM nginx:alpine
-
-COPY --from=build /app/dist/mon-angular-app /usr/share/nginx/html
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+    post {
+        success {
+            mail to: 'aziz.gmaty@gmail.com',
+                 subject: "✅ Build Success: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: "The build completed successfully."
+        }
+        failure {
+            mail to: 'aziz.gmaty@gmail.com',
+                 subject: "❌ Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: "The build failed. Please check Jenkins logs."
+        }
+    }
+}

@@ -2,30 +2,27 @@
 FROM node:20-alpine AS build
 
 WORKDIR /app
-<<<<<<< HEAD
 
-# Copy only package files first (caches install)
+# Copy dependency files
 COPY package*.json ./
 
-# Faster install with lockfile
+# Install exact deps (requires package-lock.json in repo)
 RUN npm ci --legacy-peer-deps
 
-# Copy source code after deps are cached
+# Copy source code
 COPY . .
 
-=======
-COPY package*.json ./
-RUN npm install
-COPY . .
->>>>>>> 83ff273c (3.2.0)
+# Build Angular app
 RUN npm run build --prod
 
 # Stage 2: Serve app with Nginx
 FROM nginx:alpine
-<<<<<<< HEAD
-=======
 
->>>>>>> 83ff273c (3.2.0)
+# Copy Angular dist output
 COPY --from=build /app/dist/mon-angular-app /usr/share/nginx/html
+
+# Expose port 80
 EXPOSE 80
+
+# Start nginx
 CMD ["nginx", "-g", "daemon off;"]
