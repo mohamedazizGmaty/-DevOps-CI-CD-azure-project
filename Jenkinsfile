@@ -54,7 +54,7 @@ pipeline {
                 emailext (
                     subject: "Build ${BUILD_NUMBER} Success",
                     body: "Application Angular déployée !",
-                    to: "votre@gmail.com",
+                    to: "aziz.gmaty@gmail.com",
                     from: "jenkins@votre.com"
                 )
             }
@@ -66,9 +66,10 @@ pipeline {
             emailext (
                 subject: "Build ${BUILD_NUMBER} Failed",
                 body: "La build a échoué !",
-                to: "votre@gmail.com",
+                to: "aziz.gmaty@gmail.com",
                 from: "jenkins@votre.com"
             )
         }
     }
 }
+
