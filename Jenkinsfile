@@ -1,113 +1,28 @@
-pipeline {
-    agent any
+# Stage 1: Build Angular app
+FROM node:20-alpine AS build
 
-    environment {
-        DOCKER_HUB = credentials('docker-hub') // username/password
-    }
+WORKDIR /app
 
-    stages {
+# Copy dependency files
+COPY package*.json ./
 
-        stage('Checkout SCM') {
-            steps {
-                checkout scm
-            }
-        }
+# Install exact deps (requires package-lock.json in repo)
+RUN npm ci --legacy-peer-deps
 
-        stage('Build & Push Docker Image') {
-            steps {
-                script {
-                    sh '''
-                    echo "Building Docker image..."
-                    docker build -t ${DOCKER_HUB_USR}/mon-angular-app:${BUILD_NUMBER} .
-                    
-                    echo "Logging into Docker Hub..."
-                    echo ${DOCKER_HUB_PSW} | docker login -u ${DOCKER_HUB_USR} --password-stdin
-                    
-                    echo "Pushing Docker image..."
-                    docker push ${DOCKER_HUB_USR}/mon-angular-app:${BUILD_NUMBER}
-                    '''
-                }
-            }
-        }
-<<<<<<< HEAD
+# Copy source code
+COPY . .
 
-        stage('Update Manifest & Deploy') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
-                    sh '''
-                    echo "Updating Kubernetes manifest..."
-                    sed -i "s|image: .*|image: ${DOCKER_HUB_USR}/mon-angular-app:${BUILD_NUMBER}|" k8s/angular-deployment.yaml
-                    
-                    git config user.email "jenkins@votre.com"
-                    git config user.name "Jenkins"
-                    
-                    git add k8s/angular-deployment.yaml
-                    git commit -m "Deploy Angular build ${BUILD_NUMBER}" || echo "No changes to commit"
-                    
-                    git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${GITHUB_USER}/-DevOps-CI-CD-azure-project.git HEAD:main
-                    '''
-                }
-            }
-        }
+# Build Angular app
+RUN npm run build --prod
 
-        stage('Notify') {
-            steps {
-                emailext (
-                    subject: "Build ${BUILD_NUMBER} Success",
-                    body: "Application Angular déployée !",
-                    to: "aziz.gmaty@gmail.com",
-                    from: "jenkins@votre.com"
-                )
-            }
-        }
-    }
+# Stage 2: Serve app with Nginx
+FROM nginx:alpine
 
-    post {
-        failure {
-            emailext (
-                subject: "Build ${BUILD_NUMBER} Failed",
-                body: "La build a échoué !",
-                to: "aziz.gmaty@gmail.com",
-                from: "jenkins@votre.com"
-            )
-        }
-    }
-}
+# Copy Angular dist output
+COPY --from=build /app/dist/mon-angular-app /usr/share/nginx/html
 
-=======
+# Expose port 80
+EXPOSE 80
 
-        stage('Update Manifest & Deploy') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_TOKEN')]) {
-                    sh '''
-                    echo "Updating Kubernetes manifest..."
-                    sed -i "s|image: .*|image: ${DOCKER_HUB_USR}/mon-angular-app:${BUILD_NUMBER}|" k8s/angular-deployment.yaml
-                    
-                    git config user.email "jenkins@votre.com"
-                    git config user.name "Jenkins"
-                    
-                    git add k8s/angular-deployment.yaml
-                    git commit -m "Deploy Angular build ${BUILD_NUMBER}" || echo "No changes to commit"
-                    
-                    git push https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${GITHUB_USER}/-DevOps-CI-CD-azure-project.git HEAD:main
-                    '''
-                }
-            }
-        }
-        stage('Notify') {
-            steps {
-                emailext (
-                    subject: "Build ${BUILD_NUMBER} Success",
-                    body: "Application Angular déployée !",
-                    to: "votre@gmail.com",
-                    from: "jenkins@votre.com",
-                    smtpHost: "smtp.gmail.com",
-                    smtpPort: 587,
-                    useSsl: false
-                )
-            }
-        }
-    }
-
-}
->>>>>>> 83ff273c (3.2.0)
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
