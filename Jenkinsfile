@@ -37,6 +37,8 @@ pipeline {
         stage('Update Manifest & Deploy') {
             steps {
                 sh 'echo "Deploy step (ArgoCD/K8s manifest update goes here)"'
+                        sh 'argocd app sync mon-angular-app'
+                        sh 'argocd app wait mon-angular-app --health --timeout 300'
                 // Example: sh 'kubectl apply -f k8s/'
             }
         }
