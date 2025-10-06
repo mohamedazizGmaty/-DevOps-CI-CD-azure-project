@@ -14,32 +14,24 @@ pipeline {
             }
         }
 
-        stage('Build Angular App') {
-            steps {
-                sh 'echo "Installing dependencies..."'
-                sh 'npm ci --legacy-peer-deps'
-                sh 'npm run build --prod'
-            }
-        }
-
         stage('Build & Push Docker Image') {
             steps {
                 script {
                     def IMAGE = "azizgmaty/mon-angular-app:${BUILD_NUMBER}"
+                    // Quick Docker env check
+                    sh 'docker --version || { echo "Docker not found—install on agent!"; exit 1; }'
                     sh 'echo Building Docker image...'
                     sh "docker build -t ${IMAGE} ."
-                    sh "echo ${DOCKER_HUB_PSW} | docker login -u ${DOCKER_HUB_USR} --password-stdin"
-                    sh "docker push ${IMAGE}"
+                    withDockerRegistry([credentialsId: 'docker-hub', url: '']) {
+                        sh "docker push ${IMAGE}"
+                    }
+                    echo "CI Success: Image ${IMAGE} pushed to Docker Hub."
                 }
             }
-        }
-
-        stage('Update Manifest & Deploy') {
-            steps {
-                sh 'echo "Deploy step (ArgoCD/K8s manifest update goes here)"'
-                        sh 'argocd app sync mon-angular-app'
-                        sh 'argocd app wait mon-angular-app --health --timeout 300'
-                // Example: sh 'kubectl apply -f k8s/'
+            post {
+                always {
+                    sh 'docker rmi azizgmaty/mon-angular-app:${BUILD_NUMBER} || true'
+                }
             }
         }
     }
@@ -47,13 +39,13 @@ pipeline {
     post {
         success {
             mail to: 'aziz.gmaty@gmail.com',
-                 subject: "✅ Build Success: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                 body: "The build completed successfully."
+                 subject: "✅ CI Success: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: "CI completed successfully. Docker image: azizgmaty/mon-angular-app:${BUILD_NUMBER} (check Docker Hub)."
         }
         failure {
             mail to: 'aziz.gmaty@gmail.com',
-                 subject: "❌ Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                 body: "The build failed. Please check Jenkins logs."
+                 subject: "❌ CI Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: "CI failed. Please check Jenkins logs for details."
         }
     }
 }
