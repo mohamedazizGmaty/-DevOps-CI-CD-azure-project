@@ -21,7 +21,7 @@ pipeline {
                     // Quick Docker env check
                     sh 'docker --version || { echo "Docker not found—install on agent!"; exit 1; }'
                     sh 'echo Building Docker image...'
-                    sh "docker build -t ${IMAGE} ."
+                    sh "docker build --progress=plain -t ${IMAGE} ."
                     withDockerRegistry([credentialsId: 'docker-hub', url: '']) {
                         sh "docker push ${IMAGE}"
                     }
