@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: angular-container
-        image: azizgmaty/mon-angular-app:latest
+        image: azizgmaty/mon-angular-app:20
         ports:
         - containerPort: 80
 ---
