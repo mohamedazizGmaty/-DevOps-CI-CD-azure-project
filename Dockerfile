@@ -8,8 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install exact deps - cached, fast, no extras for CI speed
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --legacy-peer-deps --no-audit --no-fund
+RUN npm ci --legacy-peer-deps --verbose
 
 # Copy source code (invalidates cache only on src changes)
 COPY . .
