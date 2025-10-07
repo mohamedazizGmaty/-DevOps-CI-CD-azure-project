@@ -95,7 +95,7 @@ pipeline {
                 script {
                     // Generate short Git commit for traceability
                     def GIT_COMMIT = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-                    def IMAGE_TAG = "${env.BUILD_NUMBER}-${GIT_COMMIT}"
+                    def IMAGE_TAG = "${env.BUILD_NUMBER}"
                     def IMAGE = "${DOCKER_USER}/mon-angular-app:${IMAGE_TAG}"
 
                     echo "🐳 Building Docker image: ${IMAGE}"

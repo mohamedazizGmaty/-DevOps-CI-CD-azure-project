@@ -29,10 +29,14 @@ COPY --from=build /app/dist/mon-angular-app /usr/share/nginx/html
 # RUN rm /etc/nginx/conf.d/default.conf
 
 # Run as non-root user for security (best practice)
-USER nginx
+# Fix permissions for Nginx cache
+RUN mkdir -p /var/cache/nginx /var/run/nginx && chown -R nginx:nginx /var/cache/nginx /var/run/nginx && chmod -R 755 /var/cache/nginx /var/run/nginx
+
+EXPOSE 80
+
+USER root
 
 # Expose HTTP port
-EXPOSE 80
 
 
 # Start Nginx in foreground
