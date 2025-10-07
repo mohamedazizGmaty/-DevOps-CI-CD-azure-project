@@ -145,7 +145,7 @@ stage('Update Kubernetes Manifests') {
             // Update the image tag inside angular-deployment.yaml
             sh """
                 sed -i.bak "s|image: ${DOCKER_USER}/mon-angular-app:.*|image: ${DOCKER_USER}/mon-angular-app:${IMAGE_TAG}|" k8s/angular-deployment.yaml
-                git add k8s/angular-deployment.yaml
+                git add k8s/deployment.yaml
                 git commit -m "Update image to ${IMAGE_TAG} [ci skip]" || echo "No changes to commit."
                 git push https://${GITHUB_TOKEN}@github.com/mohamedazizGmaty/-DevOps-CI-CD-azure-project.git main
             """
