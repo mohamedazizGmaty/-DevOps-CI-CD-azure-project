@@ -16,17 +16,17 @@ pipeline {
 
         stage('Build & Push Docker Image') {
             steps {
-                script {
-                    def IMAGE = "azizgmaty/mon-angular-app:${BUILD_NUMBER}"
-                    // Quick Docker env check
-                    sh 'docker --version || { echo "Docker not found—install on agent!"; exit 1; }'
-                    sh 'echo Building Docker image...'
-                    sh "docker build --progress=plain -t ${IMAGE} ."
-                    withDockerRegistry([credentialsId: 'docker-hub', url: '']) {
-                        sh "docker push ${IMAGE}"
-                    }
-                    echo "CI Success: Image ${IMAGE} pushed to Docker Hub."
-                }
+             script {
+    def IMAGE = "azizgmaty/mon-angular-app:${BUILD_NUMBER}"
+    // Quick Docker env check
+    sh 'docker --version || { echo "Docker not found—install on agent!"; exit 1; }'
+    sh 'echo Building Docker image...'
+    sh "DOCKER_BUILDKIT=1 docker build --progress=plain -t ${IMAGE} ."
+    withDockerRegistry([credentialsId: 'docker-hub', url: '']) {
+        sh "docker push ${IMAGE}"
+    }
+    echo "CI Success: Image ${IMAGE} pushed to Docker Hub."
+}
             }
             post {
                 always {
