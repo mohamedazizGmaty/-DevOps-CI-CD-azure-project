@@ -10,11 +10,14 @@ COPY package*.json ./
 # Install exact deps - cached, fast, no extras for CI speed
 RUN npm ci --legacy-peer-deps --verbose
 
+# ✅ Install Angular CLI globally
+RUN npm install -g @angular/cli
+
 # Copy source code (invalidates cache only on src changes)
 COPY . .
 
 # Build Angular app for production
-RUN npm run build --prod
+RUN ng build --configuration production --base-href /
 
 # Stage 2: Serve app with Nginx (minimal runtime)
 FROM nginx:alpine
