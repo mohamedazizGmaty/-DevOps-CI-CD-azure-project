@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB = credentials('docker-hub') // Jenkins credentials ID
+        DOCKER_HUB = credentials('docker-hub') // Jenkins Docker Hub credentials ID
     }
 
     stages {
@@ -16,21 +16,33 @@ pipeline {
 
         stage('Build & Push Docker Image') {
             steps {
-             script {
-    def IMAGE = "azizgmaty/mon-angular-app:${BUILD_NUMBER}"
-    // Quick Docker env check
-    sh 'docker --version || { echo "Docker not found—install on agent!"; exit 1; }'
-    sh 'echo Building Docker image...'
-    sh "DOCKER_BUILDKIT=1 docker build --progress=plain -t ${IMAGE} ."
-    withDockerRegistry([credentialsId: 'docker-hub', url: '']) {
-        sh "docker push ${IMAGE}"
-    }
-    echo "CI Success: Image ${IMAGE} pushed to Docker Hub."
-}
+                script {
+                    // Define image tag with build number + short git commit for traceability
+                    def IMAGE = "azizgmaty/mon-angular-app:${env.BUILD_NUMBER}"
+
+                    echo "🐳 Docker build & push starting for ${IMAGE}..."
+
+                    // Ensure Docker is available
+                    sh 'docker --version || { echo "❌ Docker not found—install on agent!"; exit 1; }'
+
+                    // Build image (BuildKit disabled for compatibility)
+                    sh "docker build -t ${IMAGE} ."
+
+                    // Push image to Docker Hub
+                    withDockerRegistry([credentialsId: 'docker-hub', url: '']) {
+                        sh "docker push ${IMAGE}"
+                    }
+
+                    echo "✅ CI Success: Image ${IMAGE} pushed to Docker Hub."
+                }
             }
+
             post {
                 always {
+                    // Clean up image after build to free disk space
                     sh 'docker rmi azizgmaty/mon-angular-app:${BUILD_NUMBER} || true'
+                    // Optionally prune unused layers
+                    sh 'docker system prune -af || true'
                 }
             }
         }
@@ -40,12 +52,12 @@ pipeline {
         success {
             mail to: 'aziz.gmaty@gmail.com',
                  subject: "✅ CI Success: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                 body: "CI completed successfully. Docker image: azizgmaty/mon-angular-app:${BUILD_NUMBER} (check Docker Hub)."
+                 body: "The CI/CD pipeline completed successfully.\nDocker image: azizgmaty/mon-angular-app:${BUILD_NUMBER}\nCheck your Docker Hub repository."
         }
         failure {
             mail to: 'aziz.gmaty@gmail.com',
                  subject: "❌ CI Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                 body: "CI failed. Please check Jenkins logs for details."
+                 body: "The CI/CD pipeline failed.\nPlease review the Jenkins logs for more details."
         }
     }
 }
