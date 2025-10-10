@@ -36,7 +36,7 @@ The architecture includes:
 
 ## Pipeline Overview
 
-![Jenkins Pipeline](images/jenkins-pipeline.png)
+![Jenkins Pipeline](images/jenkins-pipeline.jpg)
 The CI/CD pipeline includes stages:
 - **Checkout**: Pull code from GitHub.
 - **Build**: Compile the Angular app.
