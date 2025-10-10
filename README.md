@@ -55,11 +55,13 @@ The CI/CD pipeline includes stages:
 - **Angular**: Frontend application.
 
 ## Next Steps
+
 - Configure the Jenkins pipeline for Angular deployment.
 - Set up monitoring with Prometheus/Grafana.
 - Implement storage with MinIO or Azure Blob.
 
 ## Contributing
+
 Feel free to fork this repository, submit issues, or pull requests. Let's build together!
 
 ## License
